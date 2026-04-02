@@ -114,6 +114,7 @@ class SlurmPipesClient(PipesClient):
         pack_cmd_override: Optional[list[str]] = None,
         pre_deployed_env_path_override: Optional[str] = None,
         extra_files: Optional[list[str]] = None,
+        poll_timeout: int = 3600,
         **kwargs,
     ) -> PipesClientCompletedInvocation:
         """Execute payload on Slurm cluster with real-time log streaming.
@@ -132,6 +133,8 @@ class SlurmPipesClient(PipesClient):
                 it already exists remotely).
             remote_payload_path: Optional pre-existing remote payload path to use when
                 skipping upload.
+            poll_timeout: Maximum time in seconds to wait for the Slurm job to
+                complete. Defaults to 3600 (1 hour).
             **kwargs: Additional arguments (ignored, for forward compatibility)
 
         Yields:
@@ -240,6 +243,7 @@ class SlurmPipesClient(PipesClient):
                                 ssh_pool,
                                 run_dir,
                                 message_reader=message_reader,
+                                poll_timeout=poll_timeout,
                                 op_context=op_ctx,
                             )
 
@@ -442,6 +446,7 @@ class SlurmPipesClient(PipesClient):
                             message_reader=message_reader,
                             extra_slurm_opts=extra_slurm_opts,
                             op_context=context.op_execution_context,
+                            poll_timeout=poll_timeout,
                         )
 
                     self._maybe_emit_final_logs(
@@ -1079,6 +1084,7 @@ class SlurmPipesClient(PipesClient):
         message_reader,
         extra_slurm_opts: Optional[Dict[str, Any]] = None,
         op_context: Optional[OpExecutionContext] = None,
+        poll_timeout: int = 3600,
     ) -> int:
         """Execute as standalone sbatch job with real-time log streaming.
 
@@ -1088,6 +1094,8 @@ class SlurmPipesClient(PipesClient):
             ssh_pool: SSH connection pool
             extra_slurm_opts: Optional Slurm option overrides
             op_context: Optional OpExecutionContext for checking Dagster UI cancellation
+            poll_timeout: Maximum time in seconds to wait for the Slurm job to
+                complete. Defaults to 3600 (1 hour).
 
         """
         import tempfile
@@ -1252,6 +1260,7 @@ class SlurmPipesClient(PipesClient):
             ssh_pool,
             run_dir,
             message_reader=message_reader,
+            poll_timeout=poll_timeout,
             op_context=op_context,
             poll_timeout=self.poll_timeout,
         )

@@ -1,6 +1,6 @@
 [project]
 name = "dagster-slurm-workspace"
-version = "1.11.1-rc.1"
+version = "1.12.0"
 description = "Workspace root - not published"
 readme = "README.md"
 authors = [{ name = "geoheil", email = "georg.heiler@ascii.ac.at" }]
@@ -151,7 +151,13 @@ description = "start slides server"
 cmd = "bun run export"
 cwd = "slides"
 depends-on = ["slides-install"]
-description = "expoert pdf"
+description = "export hackathon slides pdf"
+
+[tool.pixi.feature.docs.tasks.slides-export-pdf-multimodal]
+cmd = "bun run export-multimodal"
+cwd = "slides"
+depends-on = ["slides-install"]
+description = "export multimodal slides pdf"
 
 [tool.pixi.feature.docs.tasks.slides-build]
 cmd = "bun run build"
