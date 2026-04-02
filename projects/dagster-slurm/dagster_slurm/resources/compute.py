@@ -229,8 +229,10 @@ class ComputeResource(ConfigurableResource):
             )
 
         if self.mode == ExecutionMode.LOCAL:
-            # Local mode: no SSH, no Slurm
-            return LocalPipesClient(launcher=effective_launcher)
+            # Local mode: no SSH, no Slurm.
+            # Skip pixi check when using a pre-deployed env (e.g. uv venv).
+            require_pixi = self.pre_deployed_env_path is None
+            return LocalPipesClient(launcher=effective_launcher, require_pixi=require_pixi)
 
         elif self.mode == ExecutionMode.SLURM:
             # Per-asset mode: each asset = separate sbatch job

@@ -64,6 +64,7 @@ class SlurmPipesClient(PipesClient):
         pack_platform: Optional[str] = None,
         pre_deployed_env_path: Optional[str] = None,
         cache_inject_globs: Optional[list[str]] = None,
+        poll_timeout: int = 14400,
     ):
         """Args:
         slurm_resource: Slurm cluster configuration
@@ -96,6 +97,7 @@ class SlurmPipesClient(PipesClient):
         self._sigterm_received = False
         self.pre_deployed_env_path = pre_deployed_env_path
         self.cache_inject_globs = cache_inject_globs
+        self.poll_timeout = poll_timeout
 
     def run(  # type: ignore[override]
         self,
@@ -1251,6 +1253,7 @@ class SlurmPipesClient(PipesClient):
             run_dir,
             message_reader=message_reader,
             op_context=op_context,
+            poll_timeout=self.poll_timeout,
         )
 
         return job_id
@@ -1778,7 +1781,7 @@ class SlurmPipesClient(PipesClient):
                         self.logger.info(f"Job {job_id} completed successfully")
                         break
 
-                    self._interruptible_sleep(1, job_id)
+                    self._interruptible_sleep(30, job_id)
                     continue
 
                 except Exception as exc:
@@ -1892,9 +1895,11 @@ class SlurmPipesClient(PipesClient):
             if state:
                 return state
 
-            # Fall back to sacct (for completed jobs)
+            # Fall back to sacct (for completed jobs).
+            # Use State%20 to avoid truncation — default 10-char column
+            # turns OUT_OF_MEMORY into OUT_OF_ME+ which isn't in TERMINAL_STATES.
             output = ssh_pool.run(
-                f"sacct -X -n -j {job_id} -o State 2>/dev/null || true"
+                f"sacct -X -n -j {job_id} -o State%20 2>/dev/null || true"
             )
             state = output.strip()
             return state.split()[0] if state else ""
